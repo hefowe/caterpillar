@@ -47,6 +47,15 @@ contract <%= nodeName(processId()) %>_Contract {
 <% })} -%>
     <%= globalDeclarations() -%>
 
+<%  dataObjectList.forEach((dataObjectStates, dataObjectName, map) => {  -%>
+    enum <%= dataObjectName %>States { <%= dataObjectStates[0], -%><%  dataObjectStates.slice(1).forEach(dataObjectState => {  -%>, <%= dataObjectState %><%  }) -%> }
+
+    // struct for data object <%= dataObjectName %>
+    struct <%= dataObjectName %> {
+        <%= dataObjectName %>States state;
+    }
+<%  }) -%>
+
     function <%= nodeName(processId()) %>_Contract() {
         owner = msg.sender;
 <% oracleTaskMap.forEach((oracleKey, nodeId, map) => { -%>
@@ -647,8 +656,8 @@ if (node.loopCharacteristics && node.loopCharacteristics.$type === 'bpmn:MultiIn
 <%            } else { -%>
         if(active_<%= nodeName(nodeId) %> != 0)
             flowNodes |= <%= flowNodeIndex(nodeId) %>;
-<% } }}} else if (!(is(node, 'bpmn:ExclusiveGateway') || is(node, 'bpmn:ParallelGateway') || is(node, 'bpmn:EventBasedGateway') 
-                  || is(node, 'bpmn:StartEvent') && node.$parent && is(node.$parent, 'bpmn:SubProcess') ||
+            <% } }}} else if (!(is(node, 'bpmn:ExclusiveGateway') || is(node, 'bpmn:ParallelGateway') || is(node, 'bpmn:EventBasedGateway') 
+            || is(node, 'bpmn:StartEvent') && node.$parent && is(node.$parent, 'bpmn:SubProcess') ||
                   multiinstanceActivities.indexOf(nodeId) >= 0 || is(node, 'bpmn:CallActivity'))) {
        if(is(node, 'bpmn:ServiceTask') || is(node, 'ScriptTask')) { -%>
         if(localTokens & <%= nodePreMarking %> == <%= nodePreMarking %>)

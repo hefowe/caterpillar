@@ -233,6 +233,20 @@ export let parseModel = (modelInfo: ModelInfo) => new Promise((resolve, reject) 
         // In addition, all the elements of a non interrupting subprocess event appears embedded on its parent process
         for (let controlFlowInfo of globalControlFlowInfo) {
 
+
+            for (let node of proc.flowElements.filter((e) => is(e, "bpmn:DataObjectReference"))) {
+                const dataObjectName = node.name.substr(0, node.name.indexOf(' ['));
+                if (!controlFlowInfo.dataObjectList.has(dataObjectName)) {
+                    controlFlowInfo.dataObjectList.set(dataObjectName, []);
+                }
+
+                const dataObjectState = node.name.substring(node.name.indexOf('[') + 1, node.name.indexOf(']'));
+                controlFlowInfo.dataObjectList.set(dataObjectName, controlFlowInfo.dataObjectList.get(dataObjectName).concat(dataObjectState));
+            }
+
+            console.log("controlFlowInfo.dataObjectList");
+            console.log(controlFlowInfo.dataObjectList);
+
             var indexesToRemove = [];
             controlFlowInfo.sources.forEach(nodeId => {
                 if (globalNodeMap.get(nodeId).triggeredByEvent) {
@@ -372,6 +386,7 @@ export let parseModel = (modelInfo: ModelInfo) => new Promise((resolve, reject) 
 
                 let codeGenerationInfo = {
                     nodeList: controlFlowInfo.nodeList,
+                    dataObjectList: controlFlowInfo.dataObjectList,
                     nodeMap: globalNodeMap,
                     activeMessages: controlFlowInfo.activeMessages,
                     multiinstanceActivities: multiinstanceActivities,

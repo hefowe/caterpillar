@@ -35,6 +35,7 @@ export class ControlFlowInfo {
     localParameters: Map<string, Array<ParameterInfo>> = new Map();
     oracleInfo: Map<string, OracleInfo> = new Map();
     oracleTaskMap: Map<string, string> = new Map();
+    dataObjectList: Map<string, Array<string>> = new Map();
 
     constructor(public self:any, public nodeList: Array<string>,
                 public edgeList: Array<string>, public sources: Array<string>, 
