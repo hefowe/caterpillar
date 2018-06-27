@@ -3,7 +3,7 @@ import * as BpmnModdle from 'bpmn-moddle';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as ejs from 'ejs';
-import * as BigNumber from 'bignumber.js';
+import BigNumber from 'bignumber.js';
 import { ControlFlowInfo, ModelInfo, ParameterInfo, OracleInfo } from './definitions';
 
 const bpmn2solEJS = fs.readFileSync(path.join(__dirname, '../../templates') + '/bpmn2sol.ejs', 'utf-8');
