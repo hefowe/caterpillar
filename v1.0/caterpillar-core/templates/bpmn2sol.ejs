@@ -46,11 +46,11 @@ contract <%= nodeName(processId()) %>_Contract {
     uint active_<%= nodeName(nodeId) %> = 0;    
 <% })} -%>
     <%= globalDeclarations() -%>
-
-<%  dataObjectList.forEach((dataObjectStates, dataObjectName, map) => {  -%>
-    enum <%= dataObjectName %>States { <%= dataObjectStates[0], -%><%  dataObjectStates.slice(1).forEach(dataObjectState => {  -%>, <%= dataObjectState %><%  }) -%> }
-
+<% /* --------- Fields for data objects  --------------- */ -%>
+<% dataObjectList.forEach((dataObjectStates, dataObjectName, map) => {  -%>
+    
     // struct for data object <%= dataObjectName %>
+    enum <%= dataObjectName %>States { <%= dataObjectStates[0] -%><% dataObjectStates.slice(1).forEach(dataObjectState => {-%>, <%= dataObjectState %><%  }) -%> }
     struct <%= dataObjectName %> {
         <%= dataObjectName %>States state;
     }
