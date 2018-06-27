@@ -29,12 +29,12 @@ let parseBpmn = (bpmnDoc) => {
 };
 
 let is = (element, type) => element.$instanceOf(type);
-let collectControlFlowInfo = (proc: any, globalNodeMap: Map < string, any > ,
-    globalControlFlowInfo: Array < ControlFlowInfo > ): ControlFlowInfo => {
-    let nodeList: Array < string > = new Array();
-    let edgeList: Array < string > = new Array();
-    let boundaryEvents: Array < string > = new Array();
-    let nonBlockingBoundaryEvents: Array < string > = new Array();
+let collectControlFlowInfo = (proc: any, globalNodeMap: Map<string, any>,
+    globalControlFlowInfo: Array<ControlFlowInfo>): ControlFlowInfo => {
+    let nodeList: Array<string> = new Array();
+    let edgeList: Array<string> = new Array();
+    let boundaryEvents: Array<string> = new Array();
+    let nonBlockingBoundaryEvents: Array<string> = new Array();
     let controlFlowInfo: ControlFlowInfo;
 
     for (let node of proc.flowElements.filter((e) => is(e, "bpmn:FlowNode"))) {
@@ -63,8 +63,8 @@ let collectControlFlowInfo = (proc: any, globalNodeMap: Map < string, any > ,
     if (nonBlockingBoundaryEvents.length > 0) {
         let dfs = (sources: string[]) => {
             let open = [...sources];
-            let nodeList: Array < string > = new Array();
-            let edgeList: Array < string > = new Array();
+            let nodeList: Array<string> = new Array();
+            let edgeList: Array<string> = new Array();
             while (open.length > 0) {
                 let currId = open.pop();
                 let curr = globalNodeMap.get(currId);
@@ -125,7 +125,7 @@ let collectControlFlowInfo = (proc: any, globalNodeMap: Map < string, any > ,
         subprocessControlFlowInfo.parent = proc;
 
         if (!(subprocess.loopCharacteristics &&
-                subprocess.loopCharacteristics.$type === 'bpmn:MultiInstanceLoopCharacteristics')) {
+            subprocess.loopCharacteristics.$type === 'bpmn:MultiInstanceLoopCharacteristics')) {
             // Subprocess is embedded ... then copy all nodes and edges to the parent process
             subprocessControlFlowInfo.isEmbedded = true;
 
@@ -162,7 +162,7 @@ let extractParameters = (cad, nodeId, controlFlowInfo) => {
     cad = cad.replace("(", " ").replace(")", " ").trim();
     var firstSplit = cad.split(":");
     var secondSplit = firstSplit[firstSplit.length - 1].trim().split("->");
-    var resMap: Map < string, Array < string >> = new Map();
+    var resMap: Map<string, Array<string>> = new Map();
 
     var inputOutput = [firstSplit[0].trim(), secondSplit[0].trim()];
     var parameterType = ['input', 'output'];
@@ -183,7 +183,7 @@ let extractParameters = (cad, nodeId, controlFlowInfo) => {
     }
     // Updating Information of Oracle in controlFlowInfo
     if (controlFlowInfo != null) {
-        let parameters: Array < ParameterInfo > = new Array();
+        let parameters: Array<ParameterInfo> = new Array();
         var toIterate = resMap.get('input');
         for (let i = 0; i < toIterate.length; i += 2)
             parameters.push(new ParameterInfo(toIterate[i], toIterate[i + 1]));
@@ -222,16 +222,54 @@ export let parseModel = (modelInfo: ModelInfo) => new Promise((resolve, reject) 
         var parseString = require('xml2js').parseString;
         parseString(modelInfo.bpmn, function (err, result) {
             for (let task of result["bpmn:definitions"]["bpmn:process"][0]["bpmn:task"]) {
-                var found = proc.flowElements.find(function (element) {
+                let found = proc.flowElements.find(function (element) {
                     return element.id === task.$.id;
                 });
 
+                // This works only for one Input Association
+                // if (task["bpmn:dataInputAssociation"]) {
+                //     found.dataInputAssociations.sourceRef = task["bpmn:dataInputAssociation"][0]["bpmn:sourceRef"][0];
+                // }
+
                 if (task["bpmn:dataInputAssociation"]) {
-                    found.dataInputAssociations.sourceRef = task["bpmn:dataInputAssociation"][0]["bpmn:sourceRef"][0];
+                    let tempdataInputAssociations = []
+                    for (let association of task["bpmn:dataInputAssociation"]) {
+                        let foundAssociation = found.dataInputAssociations.find(function (element) {
+                            return element.id === association.$.id;
+                        });
+                        // For whatever reason this doesn't work. At least if you print foundAssociation it has now sourceRef property.
+                        foundAssociation.sourceRef = association["bpmn:sourceRef"][0];
+                        // Workaround: create a new object instead of updating the old one. 
+                        tempdataInputAssociations.push({ '$type': 'bpmn:DataInputAssociation', 'id': foundAssociation.id, 'sourceRef': association["bpmn:sourceRef"][0] })
+                    }
+                    found.dataInputAssociations = tempdataInputAssociations
                 }
 
                 if (task["bpmn:dataOutputAssociation"]) {
-                    found.dataOutputAssociations.targetRef = task["bpmn:dataOutputAssociation"][0]["bpmn:targetRef"][0];
+                    let tempdataOutputAssociations = []
+                    for (let association of task["bpmn:dataOutputAssociation"]) {
+                        // console.log(typeof(association)) // says this is an object but if you print it, its an Base {} !?
+                        // console.log("targetRef")
+                        // console.log(association["bpmn:targetRef"][0])
+                        // console.log("foundAssociations MULTIPLE")
+                        // console.log(found.dataOutputAssociations)
+
+                        let foundAssociation = found.dataOutputAssociations.find(function (element) {
+                            return element.id === association.$.id;
+                        });
+                        foundAssociation.targetRef = association["bpmn:targetRef"][0]; // Doesn't work  
+                        // console.log("foundAssociation SINGLE")
+                        // console.log(foundAssociation) // targetRef not visible
+                        // console.log("foundAssociation targetref")
+                        // console.log(foundAssociation.targetRef) // targetRef displayed correctly
+                        // foundAssociation["targetRef"] = association["bpmn:targetRef"][0];
+                        // console.log(foundAssociation) // targetRef not visible
+                        // foundAssociation.set("targetRef", association["bpmn:targetRef"][0])
+                        // console.log(foundAssociation) // targetRef not visible
+
+                        tempdataOutputAssociations.push({ '$type': 'bpmn:DataOutputAssociation', 'id': foundAssociation.id, 'targetRef': association["bpmn:targetRef"][0] })
+                    }
+                    found.dataOutputAssociations = tempdataOutputAssociations
                 }
             }
         });
@@ -241,19 +279,18 @@ export let parseModel = (modelInfo: ModelInfo) => new Promise((resolve, reject) 
 
         // BPMN to Solidity parsing
 
-        let globalNodeMap: Map < string, any > = new Map(),
-            globalNodeIndexMap: Map < string, number > = new Map(),
-            globalEdgeIndexMap: Map < string, number > = new Map(),
-            globalControlFlowInfo: Array < ControlFlowInfo > = new Array();
+        let globalNodeMap: Map<string, any> = new Map(),
+            globalNodeIndexMap: Map<string, number> = new Map(),
+            globalEdgeIndexMap: Map<string, number> = new Map(),
+            globalControlFlowInfo: Array<ControlFlowInfo> = new Array();
 
         globalNodeMap.set(proc.id, proc);
         let mainControlFlowInfo = collectControlFlowInfo(proc, globalNodeMap, globalControlFlowInfo);
-        let globalControlFlowInfoMap: Map < string, ControlFlowInfo > = new Map();
+        let globalControlFlowInfoMap: Map<string, ControlFlowInfo> = new Map();
         globalControlFlowInfo.forEach(controlFlowInfo => globalControlFlowInfoMap.set(controlFlowInfo.self.id, controlFlowInfo));
 
         // Data object preprocessing
         for (let controlFlowInfo of globalControlFlowInfo) {
-            console.log(definitions.rootElements[0]);
 
             // Input and Output sets
             for (let task of proc.flowElements.filter((e) => is(e, "bpmn:Task"))) {
@@ -261,9 +298,6 @@ export let parseModel = (modelInfo: ModelInfo) => new Promise((resolve, reject) 
                 console.log(task.name)
                 console.log(task.dataInputAssociations)
                 console.log(task.dataOutputAssociations)
-                // for (let dataInputAssociation of task.dataInputAssociations) {
-                //     console.log(dataInputAssociation.id)
-                // }  
             }
 
             // Build mapping from Data Object (e.g. Order) to all occuring states (e.g. [created, processed])
@@ -406,8 +440,8 @@ export let parseModel = (modelInfo: ModelInfo) => new Promise((resolve, reject) 
 
                 let firstInd = 0,
                     lastInd = controlFlowInfo.nodeList.length - 1;
-                let part1: Array < string > = new Array();
-                let part2: Array < string > = new Array();
+                let part1: Array<string> = new Array();
+                let part2: Array<string> = new Array();
                 controlFlowInfo.nodeList.forEach(nodeId => {
                     if (hasExternalCall(nodeId))
                         part1.push(nodeId);
@@ -657,8 +691,8 @@ export let parseModel = (modelInfo: ModelInfo) => new Promise((resolve, reject) 
                                     if (!globalNodeMap.get(node.$parent.id).triggeredByEvent && node.eventDefinitions && node.eventDefinitions[0] && is(node.eventDefinitions[0], 'bpmn:MessageEventDefinition'))
                                         bitarray[0] = 1;
                                     else if (node.outgoing)
-                                    for (let outgoing of node.outgoing)
-                                        bitarray[controlFlowInfo.edgeIndexMap.get(outgoing.id)] = 1;
+                                        for (let outgoing of node.outgoing)
+                                            bitarray[controlFlowInfo.edgeIndexMap.get(outgoing.id)] = 1;
                             }
                         }
                         for (let i = bitarray.length - 1; i >= 0; i--)
@@ -814,7 +848,7 @@ export let parseModel = (modelInfo: ModelInfo) => new Promise((resolve, reject) 
 
                 // Code for using the WorkList template
                 var userTaskList = [];
-                var parameterInfo: Map < string, Array < ParameterInfo >> = new Map();
+                var parameterInfo: Map<string, Array<ParameterInfo>> = new Map();
                 var hasDefault = false;
                 controlFlowInfo.nodeList.forEach(nodeId => {
                     var node = globalNodeMap.get(nodeId);
