@@ -229,11 +229,22 @@ export let parseModel = (modelInfo: ModelInfo) => new Promise((resolve, reject) 
         let globalControlFlowInfoMap: Map<string, ControlFlowInfo> = new Map();
         globalControlFlowInfo.forEach(controlFlowInfo => globalControlFlowInfoMap.set(controlFlowInfo.self.id, controlFlowInfo));
 
-        // Event sub-processes appear in the source list, and not in the nodeList
-        // In addition, all the elements of a non interrupting subprocess event appears embedded on its parent process
+        // Data object preprocessing
         for (let controlFlowInfo of globalControlFlowInfo) {
+            console.log(definitions.rootElements[0]);
+            
+            // Input and Output sets
+            for (let task of proc.flowElements.filter((e) => is(e, "bpmn:Task"))) {
+                console.log(task.id)
+                console.log(task.name)
+                console.log(task.dataInputAssociations)
+                console.log(task.dataOutputAssociations)
+                // for (let dataInputAssociation of task.dataInputAssociations) {
+                //     console.log(dataInputAssociation.id)
+                // }  
+            }
 
-
+            // Build mapping from Data Object (e.g. Order) to all occuring states (e.g. [created, processed])
             for (let node of proc.flowElements.filter((e) => is(e, "bpmn:DataObjectReference"))) {
                 const dataObjectName = node.name.substr(0, node.name.indexOf(' ['));
                 if (!controlFlowInfo.dataObjectList.has(dataObjectName)) {
@@ -246,6 +257,11 @@ export let parseModel = (modelInfo: ModelInfo) => new Promise((resolve, reject) 
 
             console.log("controlFlowInfo.dataObjectList");
             console.log(controlFlowInfo.dataObjectList);
+        }
+
+        // Event sub-processes appear in the source list, and not in the nodeList
+        // In addition, all the elements of a non interrupting subprocess event appears embedded on its parent process
+        for (let controlFlowInfo of globalControlFlowInfo) {
 
             var indexesToRemove = [];
             controlFlowInfo.sources.forEach(nodeId => {
