@@ -1,10 +1,14 @@
-
 import * as BpmnModdle from 'bpmn-moddle';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as ejs from 'ejs';
 import BigNumber from 'bignumber.js';
-import { ControlFlowInfo, ModelInfo, ParameterInfo, OracleInfo } from './definitions';
+import {
+    ControlFlowInfo,
+    ModelInfo,
+    ParameterInfo,
+    OracleInfo
+} from './definitions';
 
 const bpmn2solEJS = fs.readFileSync(path.join(__dirname, '../../templates') + '/bpmn2sol.ejs', 'utf-8');
 let bpmn2solTemplate = ejs.compile(bpmn2solEJS);
@@ -25,12 +29,12 @@ let parseBpmn = (bpmnDoc) => {
 };
 
 let is = (element, type) => element.$instanceOf(type);
-let collectControlFlowInfo = (proc: any, globalNodeMap: Map<string, any>,
-    globalControlFlowInfo: Array<ControlFlowInfo>): ControlFlowInfo => {
-    let nodeList: Array<string> = new Array();
-    let edgeList: Array<string> = new Array();
-    let boundaryEvents: Array<string> = new Array();
-    let nonBlockingBoundaryEvents: Array<string> = new Array();
+let collectControlFlowInfo = (proc: any, globalNodeMap: Map < string, any > ,
+    globalControlFlowInfo: Array < ControlFlowInfo > ): ControlFlowInfo => {
+    let nodeList: Array < string > = new Array();
+    let edgeList: Array < string > = new Array();
+    let boundaryEvents: Array < string > = new Array();
+    let nonBlockingBoundaryEvents: Array < string > = new Array();
     let controlFlowInfo: ControlFlowInfo;
 
     for (let node of proc.flowElements.filter((e) => is(e, "bpmn:FlowNode"))) {
@@ -59,8 +63,8 @@ let collectControlFlowInfo = (proc: any, globalNodeMap: Map<string, any>,
     if (nonBlockingBoundaryEvents.length > 0) {
         let dfs = (sources: string[]) => {
             let open = [...sources];
-            let nodeList: Array<string> = new Array();
-            let edgeList: Array<string> = new Array();
+            let nodeList: Array < string > = new Array();
+            let edgeList: Array < string > = new Array();
             while (open.length > 0) {
                 let currId = open.pop();
                 let curr = globalNodeMap.get(currId);
@@ -121,7 +125,7 @@ let collectControlFlowInfo = (proc: any, globalNodeMap: Map<string, any>,
         subprocessControlFlowInfo.parent = proc;
 
         if (!(subprocess.loopCharacteristics &&
-            subprocess.loopCharacteristics.$type === 'bpmn:MultiInstanceLoopCharacteristics')) {
+                subprocess.loopCharacteristics.$type === 'bpmn:MultiInstanceLoopCharacteristics')) {
             // Subprocess is embedded ... then copy all nodes and edges to the parent process
             subprocessControlFlowInfo.isEmbedded = true;
 
@@ -158,7 +162,7 @@ let extractParameters = (cad, nodeId, controlFlowInfo) => {
     cad = cad.replace("(", " ").replace(")", " ").trim();
     var firstSplit = cad.split(":");
     var secondSplit = firstSplit[firstSplit.length - 1].trim().split("->");
-    var resMap: Map<string, Array<string>> = new Map();
+    var resMap: Map < string, Array < string >> = new Map();
 
     var inputOutput = [firstSplit[0].trim(), secondSplit[0].trim()];
     var parameterType = ['input', 'output'];
@@ -179,7 +183,7 @@ let extractParameters = (cad, nodeId, controlFlowInfo) => {
     }
     // Updating Information of Oracle in controlFlowInfo
     if (controlFlowInfo != null) {
-        let parameters: Array<ParameterInfo> = new Array();
+        let parameters: Array < ParameterInfo > = new Array();
         var toIterate = resMap.get('input');
         for (let i = 0; i < toIterate.length; i += 2)
             parameters.push(new ParameterInfo(toIterate[i], toIterate[i + 1]));
@@ -214,25 +218,43 @@ export let parseModel = (modelInfo: ModelInfo) => new Promise((resolve, reject) 
         if (!definitions.diagrams || definitions.diagrams.length == 0)
             throw new Error('ERROR: No diagram found in BPMN file');
         let proc = definitions.diagrams[0].plane.bpmnElement;
+
+        var parseString = require('xml2js').parseString;
+        parseString(modelInfo.bpmn, function (err, result) {
+            for (let task of result["bpmn:definitions"]["bpmn:process"][0]["bpmn:task"]) {
+                var found = proc.flowElements.find(function (element) {
+                    return element.id === task.$.id;
+                });
+
+                if (task["bpmn:dataInputAssociation"]) {
+                    found.dataInputAssociations.sourceRef = task["bpmn:dataInputAssociation"][0]["bpmn:sourceRef"][0];
+                }
+
+                if (task["bpmn:dataOutputAssociation"]) {
+                    found.dataOutputAssociations.targetRef = task["bpmn:dataOutputAssociation"][0]["bpmn:targetRef"][0];
+                }
+            }
+        });
+
         if (proc.$type !== 'bpmn:Process')
             throw new Error('ERROR: No root process model found');
 
         // BPMN to Solidity parsing
 
-        let globalNodeMap: Map<string, any> = new Map(),
-            globalNodeIndexMap: Map<string, number> = new Map(),
-            globalEdgeIndexMap: Map<string, number> = new Map(),
-            globalControlFlowInfo: Array<ControlFlowInfo> = new Array();
+        let globalNodeMap: Map < string, any > = new Map(),
+            globalNodeIndexMap: Map < string, number > = new Map(),
+            globalEdgeIndexMap: Map < string, number > = new Map(),
+            globalControlFlowInfo: Array < ControlFlowInfo > = new Array();
 
         globalNodeMap.set(proc.id, proc);
         let mainControlFlowInfo = collectControlFlowInfo(proc, globalNodeMap, globalControlFlowInfo);
-        let globalControlFlowInfoMap: Map<string, ControlFlowInfo> = new Map();
+        let globalControlFlowInfoMap: Map < string, ControlFlowInfo > = new Map();
         globalControlFlowInfo.forEach(controlFlowInfo => globalControlFlowInfoMap.set(controlFlowInfo.self.id, controlFlowInfo));
 
         // Data object preprocessing
         for (let controlFlowInfo of globalControlFlowInfo) {
             console.log(definitions.rootElements[0]);
-            
+
             // Input and Output sets
             for (let task of proc.flowElements.filter((e) => is(e, "bpmn:Task"))) {
                 console.log(task.id)
@@ -277,7 +299,9 @@ export let parseModel = (modelInfo: ModelInfo) => new Promise((resolve, reject) 
                         })
                 }
             })
-            indexesToRemove.sort((ind1, ind2) => { return ind2 - ind1; });
+            indexesToRemove.sort((ind1, ind2) => {
+                return ind2 - ind1;
+            });
             indexesToRemove.forEach(index => {
                 controlFlowInfo.sources.splice(index, 1);
             })
@@ -288,15 +312,18 @@ export let parseModel = (modelInfo: ModelInfo) => new Promise((resolve, reject) 
 
         let hasExternalCall = (nodeId) => {
             var node = globalNodeMap.get(nodeId);
-            return is(node, 'bpmn:UserTask') || is(node, 'bpmn:ServiceTask') || is(node, 'bpmn:ReceiveTask') || 
-                    (node.eventDefinitions && is(node.eventDefinitions[0], "bpmn:MessageEventDefinition") && 
+            return is(node, 'bpmn:UserTask') || is(node, 'bpmn:ServiceTask') || is(node, 'bpmn:ReceiveTask') ||
+                (node.eventDefinitions && is(node.eventDefinitions[0], "bpmn:MessageEventDefinition") &&
                     !is(node, 'bpmn:IntermediateThrowEvent') && !is(node, 'bpmn:EndEvent'));
         }
 
         for (let controlFlowInfo of globalControlFlowInfo) {
             controlFlowInfo.activeMessages = [];
             if (!controlFlowInfo.isEmbedded) {
-                var multiinstanceActivities = [], callActivities = [], nonInterruptingEvents = [], catchingMessages = [];
+                var multiinstanceActivities = [],
+                    callActivities = [],
+                    nonInterruptingEvents = [],
+                    catchingMessages = [];
 
                 controlFlowInfo.nodeList.map(nodeId => globalNodeMap.get(nodeId))
                     .forEach(e => {
@@ -377,11 +404,12 @@ export let parseModel = (modelInfo: ModelInfo) => new Promise((resolve, reject) 
                     }
                 });
 
-                let firstInd = 0, lastInd = controlFlowInfo.nodeList.length - 1;
-                let part1: Array<string> = new Array();
-                let part2: Array<string> = new Array();
+                let firstInd = 0,
+                    lastInd = controlFlowInfo.nodeList.length - 1;
+                let part1: Array < string > = new Array();
+                let part2: Array < string > = new Array();
                 controlFlowInfo.nodeList.forEach(nodeId => {
-                    if(hasExternalCall(nodeId))
+                    if (hasExternalCall(nodeId))
                         part1.push(nodeId);
                     else
                         part2.push(nodeId)
@@ -507,7 +535,7 @@ export let parseModel = (modelInfo: ModelInfo) => new Promise((resolve, reject) 
                     getCountExternalTasks: () => {
                         var res = 0;
                         controlFlowInfo.nodeList.forEach(nodeId => {
-                            if(hasExternalCall(nodeId))
+                            if (hasExternalCall(nodeId))
                                 res++;
                         })
                         return res;
@@ -521,7 +549,7 @@ export let parseModel = (modelInfo: ModelInfo) => new Promise((resolve, reject) 
                         })
                         return res;
                     },
-                    getParent: (nodeId) => {         // Retrieves the id of the parent
+                    getParent: (nodeId) => { // Retrieves the id of the parent
                         var node = globalNodeMap.get(nodeId);
                         if (is(node, "bpmn:StartEvent") && node.$parent && globalNodeMap.get(node.$parent.id).triggeredByEvent)
                             return globalNodeMap.get(node.$parent.id).$parent.id;
@@ -529,7 +557,7 @@ export let parseModel = (modelInfo: ModelInfo) => new Promise((resolve, reject) 
                             return node.attachedToRef.id;
                         return node.$parent ? node.$parent.id : nodeId;
                     },
-                    getContractName: (nodeId) => {    // Retrieves the contract name related to the node.
+                    getContractName: (nodeId) => { // Retrieves the contract name related to the node.
                         var node = globalNodeMap.get(nodeId);
                         if (is(node, "bpmn:StartEvent") && node.$parent && globalNodeMap.get(node.$parent.id).triggeredByEvent)
                             return node.$parent.id;
@@ -560,7 +588,7 @@ export let parseModel = (modelInfo: ModelInfo) => new Promise((resolve, reject) 
                             return true;
                         return false;
                     },
-                    isInterrupting: (eventId) => {  // True if an event is interrupting
+                    isInterrupting: (eventId) => { // True if an event is interrupting
                         var node = globalNodeMap.get(eventId);
                         if (is(node, "bpmn:StartEvent") && node.$parent && globalNodeMap.get(node.$parent.id).triggeredByEvent)
                             return node.isInterrupting != false;
@@ -623,15 +651,14 @@ export let parseModel = (modelInfo: ModelInfo) => new Promise((resolve, reject) 
                         if (is(toSearch, 'bpmn:BoundaryEvent')) {
                             for (let outgoing of toSearch.outgoing)
                                 bitarray[controlFlowInfo.edgeIndexMap.get(outgoing.id)] = 1;
-                        }
-                        else {
+                        } else {
                             for (let node of toSearch.flowElements.filter((e) => is(e, "bpmn:FlowNode") && is(e, "bpmn:StartEvent"))) {
                                 if (node.$parent.id === subprocessId)
                                     if (!globalNodeMap.get(node.$parent.id).triggeredByEvent && node.eventDefinitions && node.eventDefinitions[0] && is(node.eventDefinitions[0], 'bpmn:MessageEventDefinition'))
                                         bitarray[0] = 1;
                                     else if (node.outgoing)
-                                        for (let outgoing of node.outgoing)
-                                            bitarray[controlFlowInfo.edgeIndexMap.get(outgoing.id)] = 1;
+                                    for (let outgoing of node.outgoing)
+                                        bitarray[controlFlowInfo.edgeIndexMap.get(outgoing.id)] = 1;
                             }
                         }
                         for (let i = bitarray.length - 1; i >= 0; i--)
@@ -731,7 +758,7 @@ export let parseModel = (modelInfo: ModelInfo) => new Promise((resolve, reject) 
                             return '';
                     },
                     getOracleFunction: (nodeId) => {
-                        if(controlFlowInfo.oracleTaskMap.has(nodeId))
+                        if (controlFlowInfo.oracleTaskMap.has(nodeId))
                             return controlFlowInfo.oracleInfo.get(controlFlowInfo.oracleTaskMap.get(nodeId)).functionName;
                         return "";
                     },
@@ -787,7 +814,7 @@ export let parseModel = (modelInfo: ModelInfo) => new Promise((resolve, reject) 
 
                 // Code for using the WorkList template
                 var userTaskList = [];
-                var parameterInfo: Map<string, Array<ParameterInfo>> = new Map();
+                var parameterInfo: Map < string, Array < ParameterInfo >> = new Map();
                 var hasDefault = false;
                 controlFlowInfo.nodeList.forEach(nodeId => {
                     var node = globalNodeMap.get(nodeId);
@@ -856,6 +883,7 @@ export let parseModel = (modelInfo: ModelInfo) => new Promise((resolve, reject) 
 
         resolve();
 
-    }).catch(err => { throw new Error(err); });
+    }).catch(err => {
+        throw new Error(err);
+    });
 });
-
