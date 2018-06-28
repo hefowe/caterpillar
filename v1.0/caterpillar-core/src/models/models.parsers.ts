@@ -298,6 +298,22 @@ export let parseModel = (modelInfo: ModelInfo) => new Promise((resolve, reject) 
                 console.log(task.name)
                 console.log(task.dataInputAssociations)
                 console.log(task.dataOutputAssociations)
+
+                if (task.dataOutputAssociations) {
+                    controlFlowInfo.dataObjectOutputList.set(task.id, []);
+
+                    for (let dataOutputAssociation of task.dataOutputAssociations) {
+                        const targetRef = dataOutputAssociation.targetRef;
+                        let foundDataObjectReference = proc.flowElements.filter((e) => is(e, "bpmn:DataObjectReference")).find(function (element) {
+                            return element.id === targetRef;
+                        });
+                        const dataObjectName = foundDataObjectReference.name.substr(0, foundDataObjectReference.name.indexOf(' ['));
+                        const dataObjectState = foundDataObjectReference.name.substring(foundDataObjectReference.name.indexOf('[') + 1, foundDataObjectReference.name.indexOf(']'));
+                        controlFlowInfo.dataObjectOutputList.set(task.id, controlFlowInfo.dataObjectOutputList.get(task.id).concat([[dataObjectName, dataObjectState]]));
+                    }
+                    console.log("controlFlowInfo.dataObjectOutputList");
+                    console.log(controlFlowInfo.dataObjectOutputList);
+                }
             }
 
             // Build mapping from Data Object (e.g. Order) to all occuring states (e.g. [created, processed])
@@ -465,6 +481,7 @@ export let parseModel = (modelInfo: ModelInfo) => new Promise((resolve, reject) 
                 let codeGenerationInfo = {
                     nodeList: controlFlowInfo.nodeList,
                     dataObjectList: controlFlowInfo.dataObjectList,
+                    dataObjectOutputList: controlFlowInfo.dataObjectOutputList,
                     nodeMap: globalNodeMap,
                     activeMessages: controlFlowInfo.activeMessages,
                     multiinstanceActivities: multiinstanceActivities,

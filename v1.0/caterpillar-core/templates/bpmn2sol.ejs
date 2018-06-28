@@ -54,6 +54,7 @@ contract <%= nodeName(processId()) %>_Contract {
     struct <%= dataObjectName %> {
         <%= dataObjectName %>States state;
     }
+    <%= dataObjectName %> <%= dataObjectName.toLowerCase() %>;
 <%  }) -%>
 
     function <%= nodeName(processId()) %>_Contract() {
@@ -63,6 +64,12 @@ contract <%= nodeName(processId()) %>_Contract {
 <% }) -%>
         for (uint i = 0; i < <%= getCountExternalTasks() %>; i++)
             requestedID.push(0);
+
+        // Initialize data objects
+<% dataObjectList.forEach((dataObjectStates, dataObjectName, map) => {  -%>
+        <%= dataObjectName.toLowerCase() %> = <%= dataObjectName %>(<%= dataObjectName %>States.<%= dataObjectStates[0] %>);
+<%  }) -%>
+        
         step(tokens);
     }
 
@@ -472,6 +479,11 @@ if (node.loopCharacteristics && node.loopCharacteristics.$type === 'bpmn:MultiIn
         uint index = uint(1) << reqId;
         if(active_<%= nodeName(nodeId) %> & index == index) {
             active_<%= nodeName(nodeId) %> &= ~index;
+
+            // Transform data objects
+    <% dataObjectOutputList.get(nodeId).forEach(dataObjectOutput => {  -%>
+        <%= dataObjectOutput[0].toLowerCase() %>.state = <%= dataObjectOutput[0] -%>States.<%= dataObjectOutput[1] -%>;
+    <%  }) -%>
 <% if(boundaryMessages.indexOf(node) >= 0) { -%>
             <%= nodeName(node.id) -%>();
             step(tokens);
