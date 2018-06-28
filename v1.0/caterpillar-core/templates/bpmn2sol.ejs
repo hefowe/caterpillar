@@ -50,7 +50,7 @@ contract <%= nodeName(processId()) %>_Contract {
 <% dataObjectList.forEach((dataObjectStates, dataObjectName, map) => {  -%>
     
     // struct for data object <%= dataObjectName %>
-    enum <%= dataObjectName %>States { <%= dataObjectStates[0] -%><% dataObjectStates.slice(1).forEach(dataObjectState => {-%>, <%= dataObjectState %><%  }) -%> }
+    enum <%= dataObjectName %>States { _, <%= dataObjectStates[0] -%><% dataObjectStates.slice(1).forEach(dataObjectState => {-%>, <%= dataObjectState %><%  }) -%> }
     struct <%= dataObjectName %> {
         <%= dataObjectName %>States state;
     }
@@ -67,7 +67,7 @@ contract <%= nodeName(processId()) %>_Contract {
 
         // Initialize data objects
 <% dataObjectList.forEach((dataObjectStates, dataObjectName, map) => {  -%>
-        <%= dataObjectName.toLowerCase() %> = <%= dataObjectName %>(<%= dataObjectName %>States.<%= dataObjectStates[0] %>);
+        <%= dataObjectName.toLowerCase() %> = <%= dataObjectName %>(<%= dataObjectName %>States._);
 <%  }) -%>
         
         step(tokens);
@@ -480,10 +480,11 @@ if (node.loopCharacteristics && node.loopCharacteristics.$type === 'bpmn:MultiIn
         if(active_<%= nodeName(nodeId) %> & index == index) {
             active_<%= nodeName(nodeId) %> &= ~index;
 
+<% if(dataObjectOutputList.has(nodeId)) { -%>
             // Transform data objects
     <% dataObjectOutputList.get(nodeId).forEach(dataObjectOutput => {  -%>
         <%= dataObjectOutput[0].toLowerCase() %>.state = <%= dataObjectOutput[0] -%>States.<%= dataObjectOutput[1] -%>;
-    <%  }) -%>
+    <%  }) -%><% } -%>
 <% if(boundaryMessages.indexOf(node) >= 0) { -%>
             <%= nodeName(node.id) -%>();
             step(tokens);
