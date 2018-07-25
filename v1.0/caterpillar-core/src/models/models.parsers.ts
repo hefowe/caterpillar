@@ -220,7 +220,7 @@ export let parseModel = (modelInfo: ModelInfo) => new Promise((resolve, reject) 
         let proc = definitions.diagrams[0].plane.bpmnElement;
 
         var parseString = require('xml2js').parseString;
-        parseString(modelInfo.originalBpmn, function (err, result) {
+        parseString(modelInfo.bpmn, function (err, result) {
             // Check whether BPMN XML file uses "bpmn:" prefix
             let prefix = "";
             if (result["bpmn:definitions"]) {
