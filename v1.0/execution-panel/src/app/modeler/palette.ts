@@ -86,6 +86,9 @@ PaletteProvider.prototype.getPaletteEntries = function (element: any) {
     'create.task': createAction(
       'bpmn:Task', 'activity', 'bpmn-icon-task'
     ),
+    'create.data-object': createAction(
+      'bpmn:DataObjectReference', 'data-object', 'bpmn-icon-data-object'
+    ),
     'create.subprocess-expanded': createAction(
       'bpmn:SubProcess', 'activity', 'bpmn-icon-subprocess-expanded', 'Create expanded SubProcess',
       { isExpanded: true }
