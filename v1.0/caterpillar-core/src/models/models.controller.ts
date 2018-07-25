@@ -406,7 +406,25 @@ models.get('/processes/:procId', (req, res) => {
             }
         }
         console.log('----------------------------------------------------------------------------------------------');
-        res.status(200).send({ bpmn: modelInfo.bpmn, workItems: workItemList, externalItemGroupList: externalItemGroupList });
+        const dataObjectMappingOutput = Array.from(
+            modelInfo.controlFlowInfoMap.get(modelInfo.controlFlowInfoMap.keys().next().value).dataObjectMappingOutput.entries()
+        )
+        .reduce((o, [key, value]) => { 
+          o[key] = value; 
+      
+          return o; 
+        }, {});
+
+        const dataObjectMappingInput = Array.from(
+            modelInfo.controlFlowInfoMap.get(modelInfo.controlFlowInfoMap.keys().next().value).dataObjectMappingInput.entries()
+        )
+        .reduce((o, [key, value]) => { 
+          o[key] = value; 
+      
+          return o; 
+        }, {});
+
+        res.status(200).send({ bpmn: modelInfo.bpmn, workItems: workItemList, externalItemGroupList: externalItemGroupList, dataObjectMappingOutput: dataObjectMappingOutput, dataObjectMappingInput: dataObjectMappingInput });
 
     } else
         res.status(404).send('Process instance not found');

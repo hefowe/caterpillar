@@ -1,13 +1,26 @@
-import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
-import { Http } from '@angular/http';
+import {
+  Component,
+  OnInit
+} from '@angular/core';
+import {
+  Router
+} from '@angular/router';
+import {
+  Http
+} from '@angular/http';
 import * as Modeler from 'bpmn-js/lib/Modeler.js';
 import * as propertiesPanelModule from 'bpmn-js-properties-panel';
 import * as propertiesProviderModule from 'bpmn-js-properties-panel/lib/provider/bpmn';
-import { ProcessStorage } from 'app/data-store/data-store';
+import {
+  ProcessStorage
+} from 'app/data-store/data-store';
 
-import { PaletteProvider } from './palette';
-import { CustomPropertiesProvider } from './props-provider';
+import {
+  PaletteProvider
+} from './palette';
+import {
+  CustomPropertiesProvider
+} from './props-provider';
 
 const fs = require('fs');
 const async = require('async');
@@ -34,7 +47,7 @@ export class ModelerComponent implements OnInit {
 
   goTo: boolean;
 
-  constructor(private router: Router, private processStorage: ProcessStorage) { }
+  constructor(private router: Router, private processStorage: ProcessStorage) {}
 
   ngOnInit() {
     this.processStorage.resetModel();
@@ -50,8 +63,7 @@ export class ModelerComponent implements OnInit {
         parent: '#js-properties-panel'
       }
     });
-    this.modeler.importXML(this.processStorage.model, (error, definitions) => {
-    });
+    this.modeler.importXML(this.processStorage.model, (error, definitions) => {});
   }
 
   openFile(event) {
@@ -60,25 +72,29 @@ export class ModelerComponent implements OnInit {
       const reader = new FileReader();
       reader.onload = () => {
         this.processStorage.model = reader.result;
-        this.modeler.importXML(this.processStorage.model, (error, definitions) => {
-        });
+        this.modeler.importXML(this.processStorage.model, (error, definitions) => {});
       };
       reader.readAsText(input.files[index]);
     }
   }
 
   validateName() {
-    this.modeler.saveXML({ format: true },
+    this.modeler.saveXML({
+        format: true
+      },
       (err: any, xml: string) => {
-        if (this.processStorage.hasModel(this.modeler.definitions.rootElements[0].id)) {
+        const process = this.modeler.definitions.rootElements.find(function (element) {
+          return element.$type === 'bpmn:Process';
+        });
+        if (this.processStorage.hasModel(process.id)) {
           this.modelText = 'The selected ID exists on the Workspace. Please, change this value and try again.';
           this.goTo = false;
-        } else if (!this.modeler.definitions.rootElements[0].name || this.modeler.definitions.rootElements[0].name === '') {
+        } else if (!process.name || process.name === '') {
           this.modelText = 'The Name of the model cannot be empty. Please, update this value and try again.';
           this.goTo = false;
         } else {
           this.goTo = true;
-          this.processStorage.modelId = this.modeler.definitions.rootElements[0].id;
+          this.processStorage.modelId = process.id;
           this.processStorage.registerModel(xml);
           this.modelText = 'Working in Model Registration. Please, take into account that this may require some seconds.';
         }

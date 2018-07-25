@@ -32,7 +32,9 @@ export class ViewerComponent implements OnInit {
   url = 'No Contracts Available';
   viewer: any;
   canvas: any;
+  state: any = null;
   previousState: any = null;
+  prevState: any = null;
 
   ///////////////////// Start //////////////////////////
 
@@ -83,11 +85,33 @@ export class ViewerComponent implements OnInit {
   }
 
   renderState(state: any) {
+    if (JSON.stringify(this.state) !== JSON.stringify(state)) {
+      this.prevState = this.state;
+      this.state = state;
+    }
+
     if (this.previousState) {
-      this.previousState.workItems.forEach(workItem => {
-        this.canvas.removeMarker(workItem.elementId, 'highlight');
-        this.canvas.removeMarker(workItem.elementId, 'highlight-running');
-      });
+        this.previousState.workItems.forEach(workItem => {
+          const inputDataObjects = this.previousState.dataObjectMappingInput[workItem.elementId];
+          if (inputDataObjects) {
+            for (const inputDataObject of inputDataObjects) {
+              this.canvas.removeMarker(inputDataObject, 'highlight');
+            }
+          }
+          
+          this.canvas.removeMarker(workItem.elementId, 'highlight');
+          this.canvas.removeMarker(workItem.elementId, 'highlight-running');
+        });
+        if (this.prevState) {
+          this.prevState.workItems.forEach(workItem => {
+            const outputDataObjects = this.prevState.dataObjectMappingOutput[workItem.elementId];
+            if (outputDataObjects) {
+              for (const outputDataObject of outputDataObjects) {
+                this.canvas.addMarker(outputDataObject, 'highlight');
+              }
+            }
+          });
+        }
       this.previousState.externalItemGroupList.forEach(workItem => {
         this.canvas.removeMarker(workItem.elementId, 'highlight-external');
       });

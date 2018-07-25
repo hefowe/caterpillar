@@ -220,54 +220,42 @@ export let parseModel = (modelInfo: ModelInfo) => new Promise((resolve, reject) 
         let proc = definitions.diagrams[0].plane.bpmnElement;
 
         var parseString = require('xml2js').parseString;
-        parseString(modelInfo.bpmn, function (err, result) {
-            for (let task of result["bpmn:definitions"]["bpmn:process"][0]["bpmn:task"]) {
+        parseString(modelInfo.originalBpmn, function (err, result) {
+            // Check whether BPMN XML file uses "bpmn:" prefix
+            let prefix = "";
+            if (result["bpmn:definitions"]) {
+                prefix = "bpmn:";
+            }
+
+            for (let task of result[prefix + "definitions"][prefix + "process"][0][prefix + "task"]) {
                 let found = proc.flowElements.find(function (element) {
                     return element.id === task.$.id;
                 });
 
-                // This works only for one Input Association
-                // if (task["bpmn:dataInputAssociation"]) {
-                //     found.dataInputAssociations.sourceRef = task["bpmn:dataInputAssociation"][0]["bpmn:sourceRef"][0];
-                // }
-
-                if (task["bpmn:dataInputAssociation"]) {
+                if (task[prefix + "dataInputAssociation"]) {
                     let tempdataInputAssociations = []
-                    for (let association of task["bpmn:dataInputAssociation"]) {
+                    for (let association of task[prefix + "dataInputAssociation"]) {
                         let foundAssociation = found.dataInputAssociations.find(function (element) {
                             return element.id === association.$.id;
                         });
                         // For whatever reason this doesn't work. At least if you print foundAssociation it has now sourceRef property.
-                        foundAssociation.sourceRef = association["bpmn:sourceRef"][0];
+                        foundAssociation.sourceRef = association[prefix + "sourceRef"][0];
                         // Workaround: create a new object instead of updating the old one. 
-                        tempdataInputAssociations.push({ '$type': 'bpmn:DataInputAssociation', 'id': foundAssociation.id, 'sourceRef': association["bpmn:sourceRef"][0] })
+                        tempdataInputAssociations.push({ '$type': prefix + 'DataInputAssociation', 'id': foundAssociation.id, 'sourceRef': association[prefix + "sourceRef"][0] })
                     }
                     found.dataInputAssociations = tempdataInputAssociations
                 }
 
-                if (task["bpmn:dataOutputAssociation"]) {
+                if (task[prefix + "dataOutputAssociation"]) {
                     let tempdataOutputAssociations = []
-                    for (let association of task["bpmn:dataOutputAssociation"]) {
-                        // console.log(typeof(association)) // says this is an object but if you print it, its an Base {} !?
-                        // console.log("targetRef")
-                        // console.log(association["bpmn:targetRef"][0])
-                        // console.log("foundAssociations MULTIPLE")
-                        // console.log(found.dataOutputAssociations)
+                    for (let association of task[prefix + "dataOutputAssociation"]) {
 
                         let foundAssociation = found.dataOutputAssociations.find(function (element) {
                             return element.id === association.$.id;
                         });
-                        foundAssociation.targetRef = association["bpmn:targetRef"][0]; // Doesn't work  
-                        // console.log("foundAssociation SINGLE")
-                        // console.log(foundAssociation) // targetRef not visible
-                        // console.log("foundAssociation targetref")
-                        // console.log(foundAssociation.targetRef) // targetRef displayed correctly
-                        // foundAssociation["targetRef"] = association["bpmn:targetRef"][0];
-                        // console.log(foundAssociation) // targetRef not visible
-                        // foundAssociation.set("targetRef", association["bpmn:targetRef"][0])
-                        // console.log(foundAssociation) // targetRef not visible
+                        foundAssociation.targetRef = association[prefix + "targetRef"][0]; // Doesn't work  
 
-                        tempdataOutputAssociations.push({ '$type': 'bpmn:DataOutputAssociation', 'id': foundAssociation.id, 'targetRef': association["bpmn:targetRef"][0] })
+                        tempdataOutputAssociations.push({ '$type': prefix + 'DataOutputAssociation', 'id': foundAssociation.id, 'targetRef': association[prefix + "targetRef"][0] })
                     }
                     found.dataOutputAssociations = tempdataOutputAssociations
                 }
@@ -301,6 +289,7 @@ export let parseModel = (modelInfo: ModelInfo) => new Promise((resolve, reject) 
 
                 if (task.dataOutputAssociations) {
                     controlFlowInfo.dataObjectOutputList.set(task.id, []);
+                    controlFlowInfo.dataObjectMappingOutput.set(task.id, []);
 
                     for (let dataOutputAssociation of task.dataOutputAssociations) {
                         const targetRef = dataOutputAssociation.targetRef;
@@ -310,9 +299,20 @@ export let parseModel = (modelInfo: ModelInfo) => new Promise((resolve, reject) 
                         const dataObjectName = foundDataObjectReference.name.substr(0, foundDataObjectReference.name.indexOf(' ['));
                         const dataObjectState = foundDataObjectReference.name.substring(foundDataObjectReference.name.indexOf('[') + 1, foundDataObjectReference.name.indexOf(']'));
                         controlFlowInfo.dataObjectOutputList.set(task.id, controlFlowInfo.dataObjectOutputList.get(task.id).concat([[dataObjectName, dataObjectState]]));
+                        controlFlowInfo.dataObjectMappingOutput.set(task.id, controlFlowInfo.dataObjectMappingOutput.get(task.id).concat(foundDataObjectReference.id));
                     }
-                    console.log("controlFlowInfo.dataObjectOutputList");
-                    console.log(controlFlowInfo.dataObjectOutputList);
+                }
+
+                if (task.dataInputAssociations) {
+                    controlFlowInfo.dataObjectMappingInput.set(task.id, []);
+
+                    for (let dataInputAssociation of task.dataInputAssociations) {
+                        const sourceRef = dataInputAssociation.sourceRef;
+                        let foundDataObjectReference = proc.flowElements.filter((e) => is(e, "bpmn:DataObjectReference")).find(function (element) {
+                            return element.id === sourceRef;
+                        });
+                        controlFlowInfo.dataObjectMappingInput.set(task.id, controlFlowInfo.dataObjectMappingInput.get(task.id).concat(foundDataObjectReference.id));
+                    }
                 }
             }
 
