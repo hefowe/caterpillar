@@ -3,29 +3,37 @@ BPMN execution engine on Ethereum
 
 Caterpillar is a Business Process Management System (BPMS) that runs on top of Ethereum and that relies on the translation of process models into smart contracts. More specifically, Caterpillar accepts as input a process model specified in BPMN and generates a set of smart contracts that captures the underlying behavior. The smart contracts, written in Ethereum's Solidity language, can then be compiled and deployed to the public or any other private Ethereum network using standard tools. Moreover, Caterpillar exhibits a REST API that can be used to interact with running instances of the deployed process models.
 
-Caterpillar also provides a set of modelling tools and an execution panel which interact with the underlying execution engine via the aforementioned REST API. The latter can also be used by third party software to interact in a programmatic way via Caterpillar with the instances of business process running on the blockchain.
+Caterpillar also provides a set of modelling tools and an execution panel which interact with the underlying execution engine via the aforementioned REST API. The latter can also be used by third party software to interact in a programmatic way via Caterpillar with the instances of business processes running on the blockchain.
+
+## Demo
+
+Watch this video to see how Caterpillar works.
+__Insert video here__
+
+The running example used in the video could be found [here](__Insert link here__).
 
 ## Running Caterpillar from a Docker Image
 
-It is also possible to execute Caterpillar from a Docker Image without needing to install all the dependencies required to run the applications locally. For that, it is necessary only to install Docker (https://www.docker.com/) on your computer, then open a terminal and run the comand:
+The easiest way to try out Caterpillar is via [Docker](https://www.docker.com/) without the need to install all dependencies locally.
+
+Open a terminal and run the comand:
 
      docker run --rm -it -p 3200:3200 -p 3000:3000 -p 8090:8090 jonaschn/caterpillar:v1
 
-Initially, you will see in the terminal, the creation of two services that are necesary for running the running example provided in https://github.com/orlenyslp/Caterpillar/blob/master/caterpillar-core/demo_running_example.bpmn. When the terminal displays the message "Listening on port 3000", it means that the core is running and then open a web browser to interact with execution panel that will be running in the URL http://localhost:3200/.
+When the terminal displays the message "Listening on port 3000", it means that the core is running.
+Open a web browser to interact with the execution panel that will be running on http://localhost:3200/.
 
 The execution panel provides a simple interface to interact with the core. The following options are available:
 
- + Creating and uploading bpmn models by clicking the button with the corresponding name. From the modeler, when you press save, the request is sent to the core. The information about the creation, compilation, and deploy of the smart contracts will be displayed in the terminal where the Docker container is running. If the model was successfully compiled, then a link to display its information will appear on the dashboard with the format <model_identifier>:<model_name>.
+ + Creating and uploading BPMN models by clicking the button with the corresponding name. From the modeler, when you press save, the request is sent to the core. The information about the creation, compilation, and deploy of the smart contracts will be displayed in the terminal where the Docker container is running. If the model was successfully compiled, then a link to display its information will appear on the dashboard with the format <model_identifier>:<model_name>.
+  
++ Searching and displaying all the process models created in the running container. The search will retrieve every model whose name or identifier contains the input as a substring. Empty searches will retrieve all created models.
  
- > After upload the running example, it is necessary to go to the documentation section for both service tasks and to replace the strings labeled as $Assess_Loan_Risk_Address and $Appraise Property_Address with the corresponding addresses where the services are running. These addresses were displayed in the terminal when the Docker container starts running.
+ + Displaying the Solidity code generated from the process model and creating new instances. From the dashboard, click the link to display the information of the desired process model. Here, there are accessible the Solidity code and the active instances. There are also provided two buttons that allow the creation and an update of running instances. The button labeled with "Refresh instances" will remove all addresses from the list where the belonging process execution was finished.
  
-+ Searching and displaying all the process model created in the current running of the container. The search will retrieve every model whose name or identifier contains the input as a substring. Empty searches will generate all the models created until now.
+ + Executing process instances. By clicking on the address of the desired instance, a viewer will be displayed that allows the visualization of the data objects' states and the active tasks (both in dark green) that can be executed by clicking on them. The viewer also allows switching to each active instance of the process. Every time a new instance is selected, the button labeled with "Go" must be pressed to display the current status of the instance.
  
- + Displaying the solidity code generated from the process model and create new instances. From the dashboard, click the link to display the information of the desired process model. Here, there are accessible the solidity code and the active instances. There are also provided two buttons that allow the creation and updating of running instances. The button labeled with "Refresh instances" will remove from the list all the addresses to processes instances whose execution was concluded.
- 
- + Executing process instances. By clicking on the address of the desired instance, it will be displayed a viewer that allows the visualization of the active tasks (in dark green) that can be executed by clicking on them. The viewer also allows switching to each active instance of the process. Every time a new instance is selected, the button labeled with "Go" must be pressed to display the current status of the instance.
- 
-All the results of the queries performed by the execution panel to the caterpillar core through the REST API will appear also in the terminal where the docker container is running.  
+All results of the queries performed by the execution panel via the caterpillar core REST API will appear also in the terminal where the docker container is running.  
  
 
 ## Running Caterpillar locally
