@@ -251,6 +251,7 @@ export let parseModel = (modelInfo: ModelInfo) => new Promise((resolve, reject) 
                 prefix = "bpmn:";
             }
 
+            // Extract the sourceRef and targetRef properties from the raw XML file since bpmn-moddle does not support them
             for (let task of result[prefix + "definitions"][prefix + "process"][0][prefix + "task"]) {
                 let found = proc.flowElements.find(function (element) {
                     return element.id === task.$.id;
@@ -262,11 +263,11 @@ export let parseModel = (modelInfo: ModelInfo) => new Promise((resolve, reject) 
                         let foundAssociation = found.dataInputAssociations.find(function (element) {
                             return element.id === association.$.id;
                         });
-                        // For whatever reason this doesn't work. At least if you print foundAssociation it has now sourceRef property.
-                        foundAssociation.sourceRef = association[prefix + "sourceRef"][0];
-                        // Workaround: create a new object instead of updating the old one. 
+
                         tempdataInputAssociations.push({ '$type': prefix + 'DataInputAssociation', 'id': foundAssociation.id, 'sourceRef': association[prefix + "sourceRef"][0] })
                     }
+
+                    // Update dataInputAssociations in bpmn-moddle task object
                     found.dataInputAssociations = tempdataInputAssociations
                 }
 
@@ -277,10 +278,11 @@ export let parseModel = (modelInfo: ModelInfo) => new Promise((resolve, reject) 
                         let foundAssociation = found.dataOutputAssociations.find(function (element) {
                             return element.id === association.$.id;
                         });
-                        foundAssociation.targetRef = association[prefix + "targetRef"][0]; // Doesn't work  
 
                         tempdataOutputAssociations.push({ '$type': prefix + 'DataOutputAssociation', 'id': foundAssociation.id, 'targetRef': association[prefix + "targetRef"][0] })
                     }
+
+                    // Update dataOutputAssociations in bpmn-moddle task object
                     found.dataOutputAssociations = tempdataOutputAssociations
                 }
             }
@@ -304,13 +306,9 @@ export let parseModel = (modelInfo: ModelInfo) => new Promise((resolve, reject) 
         // Data object preprocessing
         for (let controlFlowInfo of globalControlFlowInfo) {
 
-            // Input and Output sets
+            // dataObjectOutputList: Build mapping from Task (e.g. Prepare Transport) to output Data Objects (e.g. Order) with their states (e.g. [created, processed])
+            // dataObjectMappingOutput: Build mapping from Task (e.g. Prepare Transport) to output Data Object References (e.g. DataObjectReference_0vr6h3u)
             for (let task of proc.flowElements.filter((e) => is(e, "bpmn:Task"))) {
-                console.log(task.id)
-                console.log(task.name)
-                console.log(task.dataInputAssociations)
-                console.log(task.dataOutputAssociations)
-
                 if (task.dataOutputAssociations) {
                     controlFlowInfo.dataObjectOutputList.set(task.id, []);
                     controlFlowInfo.dataObjectMappingOutput.set(task.id, []);
@@ -327,6 +325,7 @@ export let parseModel = (modelInfo: ModelInfo) => new Promise((resolve, reject) 
                     }
                 }
 
+                // dataObjectMappingInput: Build mapping from Task (e.g. Prepare Transport) to input Data Object References (e.g. DataObjectReference_0vr6h3u)
                 if (task.dataInputAssociations) {
                     controlFlowInfo.dataObjectMappingInput.set(task.id, []);
 
