@@ -320,8 +320,8 @@ export let parseModel = (modelInfo: ModelInfo) => new Promise((resolve, reject) 
                         let foundDataObjectReference = proc.flowElements.filter((e) => is(e, "bpmn:DataObjectReference")).find(function (element) {
                             return element.id === targetRef;
                         });
-                        const dataObjectName = foundDataObjectReference.name.substr(0, foundDataObjectReference.name.indexOf(' ['));
-                        const dataObjectState = foundDataObjectReference.name.substring(foundDataObjectReference.name.indexOf('[') + 1, foundDataObjectReference.name.indexOf(']'));
+                        const dataObjectName = getDataObjectName(foundDataObjectReference.name);
+                        const dataObjectState = getDataObjectState(foundDataObjectReference.name);
                         controlFlowInfo.dataObjectOutputList.set(task.id, controlFlowInfo.dataObjectOutputList.get(task.id).concat([[dataObjectName, dataObjectState]]));
                         controlFlowInfo.dataObjectMappingOutput.set(task.id, controlFlowInfo.dataObjectMappingOutput.get(task.id).concat(foundDataObjectReference.id));
                     }
@@ -341,18 +341,15 @@ export let parseModel = (modelInfo: ModelInfo) => new Promise((resolve, reject) 
             }
 
             // Build mapping from Data Object (e.g. Order) to all occuring states (e.g. [created, processed])
-            for (let node of proc.flowElements.filter((e) => is(e, "bpmn:DataObjectReference"))) {
-                const dataObjectName = node.name.substr(0, node.name.indexOf(' ['));
+            for (let dataObjectReference of proc.flowElements.filter((e) => is(e, "bpmn:DataObjectReference"))) {
+                const dataObjectName = getDataObjectName(dataObjectReference.name);
                 if (!controlFlowInfo.dataObjectList.has(dataObjectName)) {
                     controlFlowInfo.dataObjectList.set(dataObjectName, []);
                 }
 
-                const dataObjectState = node.name.substring(node.name.indexOf('[') + 1, node.name.indexOf(']'));
+                const dataObjectState = getDataObjectState(dataObjectReference.name);
                 controlFlowInfo.dataObjectList.set(dataObjectName, controlFlowInfo.dataObjectList.get(dataObjectName).concat(dataObjectState));
             }
-
-            console.log("controlFlowInfo.dataObjectList");
-            console.log(controlFlowInfo.dataObjectList);
         }
 
         // Event sub-processes appear in the source list, and not in the nodeList
