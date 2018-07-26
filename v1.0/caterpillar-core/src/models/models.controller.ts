@@ -161,10 +161,12 @@ models.post('/models', (req, res, next) => {
             })
             modelInfo.contracts = output.contracts;
             modelStore.set(modelInfo.name, modelInfo);
-            res.status(201).send({ id: modelInfo.name,
-                                   name: modelInfo.entryContractName, 
-                                   bpmn: modelInfo.bpmn, 
-                                   solidity: modelInfo.solidity });
+            res.status(201).send({
+                id: modelInfo.name,
+                name: modelInfo.entryContractName,
+                bpmn: modelInfo.bpmn,
+                solidity: modelInfo.solidity
+            });
             console.log('PROCESSED SUCCESSFULLY');
             console.log('----------------------------------------------------------------------------------------------');
         });
@@ -346,6 +348,18 @@ var computeExtendedActivation = function (contractAddress) {
     return [getExtendedList(workItemList), getExtendedList(externalItemGroupList)];
 }
 
+var map2Array = function (map) {
+
+    const array = Array.from(map)
+        .reduce((o, [key, value]) => {
+            o[key] = value;
+
+            return o;
+        }, {})
+
+    return array
+}
+
 models.post('/models/:modelId', (req, res) => {
     if (modelStore.has(req.params.modelId)) {
         let modelInfo = modelStore.get(req.params.modelId);
@@ -385,7 +399,7 @@ models.get('/processes/:procId', (req, res) => {
         console.log("External ", externalItemGroupList);
         let [contractName, modelInfo] = instances.get(contractAddress);
         console.log("CHECKING STARTED ELEMENTS ", workItemList.length == 0 && externalItemGroupList.length == 0 ? "Empty" : "..........");
-        let toDraw = workItemList.concat(externalItemGroupList) 
+        let toDraw = workItemList.concat(externalItemGroupList)
         toDraw.forEach(elem => {
             enabledTasks.set(elem.elementId, contractAddress);
             console.log("Element ID: ", elem.elementId);
@@ -406,23 +420,12 @@ models.get('/processes/:procId', (req, res) => {
             }
         }
         console.log('----------------------------------------------------------------------------------------------');
-        const dataObjectMappingOutput = Array.from(
+        const dataObjectMappingOutput = map2Array(
             modelInfo.controlFlowInfoMap.get(modelInfo.controlFlowInfoMap.keys().next().value).dataObjectMappingOutput.entries()
         )
-        .reduce((o, [key, value]) => { 
-          o[key] = value; 
-      
-          return o; 
-        }, {});
-
-        const dataObjectMappingInput = Array.from(
+        const dataObjectMappingInput = map2Array(
             modelInfo.controlFlowInfoMap.get(modelInfo.controlFlowInfoMap.keys().next().value).dataObjectMappingInput.entries()
         )
-        .reduce((o, [key, value]) => { 
-          o[key] = value; 
-      
-          return o; 
-        }, {});
 
         res.status(200).send({ bpmn: modelInfo.bpmn, workItems: workItemList, externalItemGroupList: externalItemGroupList, dataObjectMappingOutput: dataObjectMappingOutput, dataObjectMappingInput: dataObjectMappingInput });
 
