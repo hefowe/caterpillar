@@ -219,6 +219,20 @@ let getDataObjectName = (dataObjectLabel: string) => {
 
     return dataObjectLabel;
 }
+
+let getDataObjectState = (dataObjectLabel: string) => {
+    // Replace LINE FEED characters with spaces and trim the resulting data object label
+    dataObjectLabel = dataObjectLabel.replace(/\n/g, ' ').trim();
+
+    // Retrieve the data object state
+    dataObjectLabel = dataObjectLabel.substring(dataObjectLabel.indexOf('[') + 1, dataObjectLabel.indexOf(']'));
+
+    // Convert all letters of data object state to lowercase
+    dataObjectLabel = dataObjectLabel.toLowerCase();
+    
+    return dataObjectLabel;
+}
+
 export let parseModel = (modelInfo: ModelInfo) => new Promise((resolve, reject) => {
     parseBpmn(modelInfo.bpmn).then((definitions: any) => {
         modelInfo.solidity = 'pragma solidity ^0.4.14;\n';
