@@ -207,8 +207,18 @@ let extractParameters = (cad, nodeId, controlFlowInfo) => {
 
 let getNodeName = (node: any) => node.name ? node.name.replace(/\s+/g, '_') : node.id;
 
+let getDataObjectName = (dataObjectLabel: string) => {
+    // Replace LINE FEED characters with spaces and trim the resulting data object label
+    dataObjectLabel = dataObjectLabel.replace(/\n/g, ' ').trim();
 
+    // Retrieve the data object name
+    dataObjectLabel = dataObjectLabel.substr(0, dataObjectLabel.indexOf(' ['));
 
+    // Capitalize first letter of data object name
+    dataObjectLabel = dataObjectLabel.charAt(0).toUpperCase() + dataObjectLabel.slice(1);
+
+    return dataObjectLabel;
+}
 export let parseModel = (modelInfo: ModelInfo) => new Promise((resolve, reject) => {
     parseBpmn(modelInfo.bpmn).then((definitions: any) => {
         modelInfo.solidity = 'pragma solidity ^0.4.14;\n';
