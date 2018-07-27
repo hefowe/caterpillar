@@ -7,10 +7,9 @@ Caterpillar also provides a set of modelling tools and an execution panel which 
 
 ## Demo
 
-Watch this video to see how Caterpillar works.
-__Insert video here__
+Watch [this video](https://owncloud.hpi.de/index.php/s/gBB9Q6WSLTw0agM) to see how Caterpillar works.
 
-The running example used in the video could be found [here](__Insert link here__).
+The running example used in the video can be found [here](https://github.com/hefowe/caterpillar/blob/master/supplier_process.bpmn).
 
 ## Running Caterpillar from a Docker Image
 
