@@ -42,6 +42,28 @@ The folder caterpillar_core includes the implementation of the core components, 
 
 For running Caterpillar locally, download the source code from the repository and follow the next steps to set up the applications and install the required dependencies.
 
+## TL;DR
+Execute the following commands after the installation of all required dependencies:
+
+```
+testrpc
+```
+
+```
+cd v1.0/caterpillar-core/
+npm start
+```
+
+```
+cd v1.0/execution-panel/
+npm start
+```
+
+```
+cd v1.0/services-manager/
+npm start
+```
+
 ## Installing testrpc
 
 The first requirement is to install testrpc which is a Node.js based Ethereum client for testing and development. It uses ethereumjs to simulate full client behavior and make developing Ethereum applications. All the instructions about the installation can be found here: https://github.com/ethereumjs/testrpc.
