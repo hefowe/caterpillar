@@ -71,7 +71,9 @@ cd v1.0/execution-panel/
 npm install
 npm start
 ```
+Open a web browser and enter the URL: http://localhost:4200/.
 
+Try out the running example (used in the demo video) which can be found [here](https://github.com/hefowe/caterpillar/blob/master/supplier_process.bpmn).
 ## Installing testrpc
 
 The first requirement is to install testrpc which is a Node.js based Ethereum client for testing and development. It uses ethereumjs to simulate full client behavior and make developing Ethereum applications. All the instructions about the installation can be found here: https://github.com/ethereumjs/testrpc.
