@@ -11,6 +11,8 @@ Watch [this video](https://owncloud.hpi.de/index.php/s/gBB9Q6WSLTw0agM) to see h
 
 The running example used in the video can be found [here](https://github.com/hefowe/caterpillar/blob/master/supplier_process.bpmn).
 
+[![image](https://user-images.githubusercontent.com/12249969/43370516-8993090e-9380-11e8-96fe-8490b44b6568.png)](https://owncloud.hpi.de/index.php/s/gBB9Q6WSLTw0agM)
+
 ## Running Caterpillar from a Docker Image
 
 The easiest way to try out Caterpillar is via [Docker](https://www.docker.com/) without the need to install all dependencies locally.
