@@ -43,7 +43,7 @@ The folder caterpillar_core includes the implementation of the core components, 
 For running Caterpillar locally, download the source code from the repository and follow the next steps to set up the applications and install the required dependencies.
 
 ## TL;DR
-Execute the following commands after the installation of all required dependencies:
+Execute the following commands after the installation of [testrpc](https://github.com/ethereumjs/testrpc), [npm](https://www.npmjs.com/get-npm) and [gulp](https://gulpjs.com):
 
 ```
 testrpc
@@ -51,16 +51,21 @@ testrpc
 
 ```
 cd v1.0/caterpillar-core/
-npm start
-```
-
-```
-cd v1.0/execution-panel/
+npm install
+gulp build
 npm start
 ```
 
 ```
 cd v1.0/services-manager/
+npm install
+gulp build
+npm start
+```
+
+```
+cd v1.0/execution-panel/
+npm install
 npm start
 ```
 
